@@ -27,7 +27,7 @@ export class UserService {
     const { username } = data;
     let user = await this.userRepository.findOne({ where: { username } });
     if (user) {
-      throw new HttpException('User already exist', HttpStatus.BAD_REQUEST)
+      throw new HttpException('User already exist', HttpStatus.BAD_REQUEST);
     }
 
     user = await this.userRepository.create(data);
@@ -36,7 +36,7 @@ export class UserService {
   }
 
   async getAllUsers() {
-    const users = await this.userRepository.find();
+    const users = await this.userRepository.find({ relations: ['ideas'] });
     return users.map(user => user.toResponseObject(false));
   }
 }
