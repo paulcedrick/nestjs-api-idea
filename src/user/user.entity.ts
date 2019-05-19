@@ -6,11 +6,15 @@ import {
   BeforeInsert,
   OneToMany,
   UpdateDateColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { Idea } from 'src/idea/idea.entity';
+import { IdeaResponse } from 'src/idea/idea.response';
+import { UserResponse } from './user.response';
 
 const SALT = 10;
 
@@ -20,7 +24,8 @@ export interface ResponseObj {
   createdAt: Date;
   updatedAt: Date;
   token?: string;
-  ideas?: Idea[],
+  ideas?: IdeaResponse[];
+  bookmarks?: IdeaResponse[];
 }
 
 @Entity('users')
@@ -48,16 +53,57 @@ export class User {
   }
 
   @OneToMany(() => Idea, idea => idea.author)
-  ideas: Idea[];
+  ideas?: Idea[];
 
-  toResponseObject(showToken: boolean = true) {
-    const { id, createdAt, username, updatedAt, token, ideas } = this;
-    const responseObject: ResponseObj = { id, createdAt, username, updatedAt };
-    responseObject.ideas = ideas || [];
-    if (showToken) {
-      responseObject.token = token;
+  @ManyToMany(() => Idea, { cascade: true })
+  @JoinTable()
+  bookmarks?: Idea[];
+
+  toUserResponse(showToken: boolean = false): UserResponse {
+    const { id, ideas, bookmarks, username, token } = this;
+
+    const response: UserResponse = { id, username }
+
+    if (ideas) {
+      response.ideas = ideas.map((item) => item.toResponseObject());
     }
-    return responseObject;
+
+    if (bookmarks) {
+      response.bookmarks = bookmarks.map((item) => item.toResponseObject());
+    }
+
+    if (showToken) {
+      response.token = token;
+    }
+
+    return response;
+  }
+
+  toResponseObject(showToken: boolean = true): ResponseObj {
+    const {
+      id,
+      createdAt,
+      username,
+      updatedAt,
+      token,
+      ideas,
+      bookmarks,
+    } = this;
+    const response: ResponseObj = { id, createdAt, username, updatedAt };
+
+    if (ideas) {
+      response.ideas = ideas.map(idea => idea.toResponseObject());
+    }
+
+    if (bookmarks) {
+      response.bookmarks = bookmarks.map(idea => idea.toResponseObject());
+    }
+
+    if (showToken) {
+      response.token = token;
+    }
+
+    return response;
   }
 
   async comparePassword(password: string) {

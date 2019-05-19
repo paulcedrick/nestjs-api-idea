@@ -36,7 +36,7 @@ export class UserService {
   }
 
   async getAllUsers() {
-    const users = await this.userRepository.find({ relations: ['ideas'] });
+    const users = await this.userRepository.find({ relations: ['ideas', 'bookmarks'] });
     return users.map(user => user.toResponseObject(false));
   }
 }
